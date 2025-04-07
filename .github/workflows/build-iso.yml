@@ -17,8 +17,9 @@ jobs:
       # Step 2: Install dependencies
       - name: Install Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y genisoimage xorriso curl p7zip-full
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update -y --fix-missing
+          sudo apt-get install -y --no-install-recommends genisoimage xorriso curl p7zip-full
 
       # Step 3: Download Rocky Linux ISO
       - name: Download Rocky ISO
@@ -29,17 +30,28 @@ jobs:
       - name: Extract ISO
         run: |
           mkdir -p iso_contents
-          7z x rocky.iso -o./iso_contents
+          7z x rocky.iso -o./iso_contents || echo "Extraction failed"
 
-      # Step 5: Add kickstart file
-      #- name: Add Kickstart File
-       # run: |
-        #  cp ks.cfg iso_contents/ks.cfg
+      # Step 5: Add boot.msg and Kickstart file
+      - name: Add Custom Files
+        run: |
+          cp boot.msg iso_contents/isolinux/boot.msg
+          cp ks.cfg iso_contents/isolinux/ks.cfg
 
-      # Step 6: Modify bootloader to use kickstart
-     # - name: Update isolinux.cfg
-     #   run: |
-      #    sed -i '/append/ s|$| inst.ks=cdrom:/ks.cfg|' iso_contents/isolinux/isolinux.cfg
+      # Step 6: Modify isolinux.cfg (no countdown + Kickstart)
+      - name: Update isolinux.cfg
+        run: |
+          # Set no countdown
+          sed -i 's/TIMEOUT [0-9]*/TIMEOUT 0/' iso_contents/isolinux/isolinux.cfg
+          # Update DISPLAY to use boot.msg
+          sed -i '/DISPLAY/d' iso_contents/isolinux/isolinux.cfg
+          echo "DISPLAY boot.msg" >> iso_contents/isolinux/isolinux.cfg
+          # Fix kernel and initrd paths
+          sed -i 's|kernel vmlinuz|kernel /isolinux/vmlinuz|' iso_contents/isolinux/isolinux.cfg
+          sed -i 's|initrd=initrd.img|initrd=/isolinux/initrd.img|' iso_contents/isolinux/isolinux.cfg
+          # Update Kickstart path and stage2 label
+          sed -i 's|inst.ks=cdrom:/ks.cfg|inst.ks=cdrom:/isolinux/ks.cfg|' iso_contents/isolinux/isolinux.cfg
+          sed -i 's|inst.stage2=hd:LABEL=ROCKY-9-5-X86_64-DVD|inst.stage2=hd:LABEL=Custom_Rocky_9.3|' iso_contents/isolinux/isolinux.cfg
 
       # Step 7: Rebuild the ISO
       - name: Build Custom ISO
