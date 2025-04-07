@@ -32,14 +32,14 @@ jobs:
           7z x rocky.iso -o./iso_contents
 
       # Step 5: Add kickstart file
-      - name: Add Kickstart File
-        run: |
-          cp ks.cfg iso_contents/ks.cfg
+      #- name: Add Kickstart File
+       # run: |
+        #  cp ks.cfg iso_contents/ks.cfg
 
       # Step 6: Modify bootloader to use kickstart
-      - name: Update isolinux.cfg
-        run: |
-          sed -i '/append/ s|$| inst.ks=cdrom:/ks.cfg|' iso_contents/isolinux/isolinux.cfg
+     # - name: Update isolinux.cfg
+     #   run: |
+      #    sed -i '/append/ s|$| inst.ks=cdrom:/ks.cfg|' iso_contents/isolinux/isolinux.cfg
 
       # Step 7: Rebuild the ISO
       - name: Build Custom ISO
