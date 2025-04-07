@@ -40,29 +40,14 @@ jobs:
           file iso_contents/isolinux/vmlinuz
           file iso_contents/isolinux/initrd.img
 
-      # Step 6: Add boot.msg (skip Kickstart for now)
-      - name: Add Custom Files
+      # Step 6: Inject boot.msg, ks.cfg, and isolinux.cfg
+      - name: Inject Custom Files
         run: |
           cp boot.msg iso_contents/isolinux/boot.msg
+          cp ks.cfg iso_contents/isolinux/ks.cfg
+          cp isolinux.cfg iso_contents/isolinux/isolinux.cfg
 
-      # Step 7: Modify isolinux.cfg (no countdown, minimal parameters)
-      - name: Update isolinux.cfg
-        run: |
-          # Set no countdown
-          sed -i 's/TIMEOUT [0-9]*/TIMEOUT 0/' iso_contents/isolinux/isolinux.cfg
-          # Update DISPLAY to use boot.msg
-          sed -i '/DISPLAY/d' iso_contents/isolinux/isolinux.cfg
-          echo "DISPLAY boot.msg" >> iso_contents/isolinux/isolinux.cfg
-          # Fix kernel and initrd paths
-          sed -i 's|kernel vmlinuz|kernel /isolinux/vmlinuz|' iso_contents/isolinux/isolinux.cfg
-          sed -i 's|initrd=initrd.img|initrd=/isolinux/initrd.img|' iso_contents/isolinux/isolinux.cfg
-          # Simplify kernel command line (remove inst.* parameters for now)
-          sed -i 's|inst.stage2=cdrom:/images/install.img||' iso_contents/isolinux/isolinux.cfg
-          sed -i 's|inst.text||' iso_contents/isolinux/isolinux.cfg
-          sed -i 's|inst.debug||' iso_contents/isolinux/isolinux.cfg
-          sed -i 's|quiet||' iso_contents/isolinux/isolinux.cfg
-
-      # Step 8: Rebuild the ISO
+      # Step 7: Rebuild the ISO
       - name: Build Custom ISO
         run: |
           xorriso -as mkisofs \
@@ -79,9 +64,9 @@ jobs:
             -r -J -joliet-long \
             iso_contents/
 
-      # Step 9: Upload the ISO as an artifact
+      # Step 8: Upload the ISO as an artifact
       - name: Upload ISO Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PortalRobotics_04072025-iso
+          name: custom-rocky-iso
           path: custom-rocky.iso
