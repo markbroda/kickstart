@@ -68,5 +68,5 @@ jobs:
       - name: Upload ISO Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Portal-9-latest-x86_64
-          path: Portal-9-latest-x86_64.iso
+          name: custom-rocky-iso
+          path: custom-rocky.iso
