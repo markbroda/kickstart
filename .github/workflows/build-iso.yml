@@ -44,10 +44,17 @@ jobs:
       - name: Inject Custom Files
         run: |
           cp boot.msg iso_contents/isolinux/boot.msg
-          cp ks.cfg iso_contents/isolinux/ks.cfg
+          cp ks.cfg iso_contents/ks.cfg  # Place ks.cfg at the root of the ISO
           cp isolinux.cfg iso_contents/isolinux/isolinux.cfg
 
-      # Step 7: Rebuild the ISO
+      # Step 7: Update isolinux.cfg to point to /ks.cfg
+      - name: Update isolinux.cfg
+        run: |
+          sed -i 's|inst.ks=cdrom:/isolinux/ks.cfg|inst.ks=cdrom:/ks.cfg|' iso_contents/isolinux/isolinux.cfg
+          # Remove quiet for more boot messages
+          sed -i 's|quiet||' iso_contents/isolinux/isolinux.cfg
+
+      # Step 8: Rebuild the ISO
       - name: Build Custom ISO
         run: |
           xorriso -as mkisofs \
@@ -64,7 +71,7 @@ jobs:
             -r -J -joliet-long \
             iso_contents/
 
-      # Step 8: Upload the ISO as an artifact
+      # Step 9: Upload the ISO as an artifact
       - name: Upload ISO Artifact
         uses: actions/upload-artifact@v4
         with:
